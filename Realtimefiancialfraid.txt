@@ -1,0 +1,37 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+import joblib
+import numpy as np
+
+
+app = FastAPI(title="Real-Time Financial Fraud Detection API")
+
+
+# Request Body Schema
+class Transaction(BaseModel):
+    step: int
+    type: str
+    amount: float
+    oldbalanceOrg: float
+    newbalanceOrig: float
+    oldbalanceDest: float
+    newbalanceDest: float
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Real-time Financial Fraud Detection Engine is running successfully!"}
+
+
+@app.post("/predict-fraud")
+def predict_fraud(data: Transaction):
+    # Rule-based logic / Mock model inference for real-time check
+    is_fraud = 1 if data.amount > 150000 and data.newbalanceOrig == 0 else 0
+    probability = 0.982 if is_fraud == 1 else 0.015
+    
+    return {
+        "is_fraud": is_fraud,
+        "fraud_probability": probability,
+        "status": "ALERT: Fraudulent Transaction Detected" if is_fraud == 1 else "Transaction is Safe"
+    }
+
