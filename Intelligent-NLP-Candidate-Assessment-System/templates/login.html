@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-layout">
+    <section class="intro-panel">
+        <div class="eyebrow">SMARTER ASSESSMENT</div>
+        <h1>Find the right skills.<br><span>See the full picture.</span></h1>
+        <p>A decision-support workspace for reviewing job-related skills, resumes, and interview responses.</p>
+        <div class="feature-list">
+            <div><span class="feature-icon">✓</span> Structured candidate assessments</div>
+            <div><span class="feature-icon">✓</span> Resume and skill matching</div>
+            <div><span class="feature-icon">✓</span> Human-led hiring decisions</div>
+        </div>
+    </section>
+
+    <section class="form-panel">
+        <div class="form-heading">
+            <div class="eyebrow">WELCOME BACK</div>
+            <h2>Log in to your account</h2>
+            <p>Enter your details to continue.</p>
+        </div>
+        <form method="POST" action="{{ url_for('login') }}">
+            <label for="email">Email address</label>
+            <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+
+            <div class="label-row">
+                <label for="password">Password</label>
+            </div>
+            <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+
+            <button class="primary-button" type="submit">Log in <span>→</span></button>
+        </form>
+        <p class="form-switch">New to the platform? <a href="{{ url_for('signup') }}">Create an account</a></p>
+        <p class="small-note">Public registration creates a Candidate account. Admin accounts are created by the administrator setup command.</p>
+    </section>
+</div>
+{% endblock %}

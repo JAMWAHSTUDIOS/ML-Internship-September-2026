@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-layout signup-layout">
+    <section class="intro-panel">
+        <div class="eyebrow">GET STARTED</div>
+        <h1>Your next step<br><span>starts here.</span></h1>
+        <p>Create your candidate account to apply for available roles and complete assessments.</p>
+        <div class="feature-list">
+            <div><span class="feature-icon">✓</span> One place for your applications</div>
+            <div><span class="feature-icon">✓</span> Job-related assessment process</div>
+            <div><span class="feature-icon">✓</span> Secure account access</div>
+        </div>
+    </section>
+
+    <section class="form-panel">
+        <div class="form-heading">
+            <div class="eyebrow">CREATE ACCOUNT</div>
+            <h2>Sign up</h2>
+            <p>Fill in the details below to get started.</p>
+        </div>
+        <form method="POST" action="{{ url_for('signup') }}">
+            <label for="name">Full name</label>
+            <input id="name" name="name" type="text" placeholder="Your full name" autocomplete="name" required>
+
+            <label for="email">Email address</label>
+            <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" required>
+
+            <label for="confirm_password">Confirm password</label>
+            <input id="confirm_password" name="confirm_password" type="password" placeholder="Re-enter your password" autocomplete="new-password" minlength="8" required>
+
+            <button class="primary-button" type="submit">Create candidate account <span>→</span></button>
+        </form>
+        <p class="form-switch">Already registered? <a href="{{ url_for('login') }}">Log in</a></p>
+        <p class="small-note">Candidate accounts are created through this form. Admin registration is restricted for security.</p>
+    </section>
+</div>
+{% endblock %}
