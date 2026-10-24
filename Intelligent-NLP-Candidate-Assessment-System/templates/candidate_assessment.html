@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="dashboard-heading">
+    <div>
+        <div class="eyebrow">CANDIDATE ASSESSMENT</div>
+        <h1>{{ assignment.job_title }}</h1>
+        <p>Answer every question in your own words. Your answers will be evaluated and made available to the administrator.</p>
+    </div>
+    <a class="secondary-button" href="{{ url_for('candidate_dashboard') }}">← Dashboard</a>
+</section>
+
+<section class="form-card job-form-card">
+    {% if assignment.status == 'SUBMITTED' %}
+        <h2>Assessment submitted</h2>
+        <p>Your answers have already been submitted. Contact the administrator if you believe you need to make a correction.</p>
+    {% else %}
+        <p class="form-help">Your answers are saved when you submit the assessment. Leaving this page before submitting will not save your current edits.</p>
+        <form method="POST">
+            {% for question in questions %}
+            <div class="form-section-title">Question {{ loop.index }}</div>
+            <label for="answer_{{ question.id }}">{{ question.question_text }}</label>
+            <textarea id="answer_{{ question.id }}" name="answer_{{ question.id }}" rows="5" required>{{ existing_answers.get(question.id, '') }}</textarea>
+            {% endfor %}
+            <div class="form-actions">
+                <a class="secondary-button" href="{{ url_for('candidate_dashboard') }}">Back to dashboard</a>
+                <button class="primary-button form-submit" type="submit">Submit assessment <span>→</span></button>
+            </div>
+        </form>
+    {% endif %}
+</section>
+{% endblock %}

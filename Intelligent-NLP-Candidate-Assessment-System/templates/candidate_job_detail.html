@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="dashboard-heading">
+    <div>
+        <div class="eyebrow">JOB DETAILS</div>
+        <h1>{{ job.title }}</h1>
+        <p>Review this opportunity and its requirements before submitting your resume.</p>
+    </div>
+    <a class="secondary-button" href="{{ url_for('candidate_jobs') }}">← All jobs</a>
+</section>
+
+<section class="detail-layout">
+    <article class="content-panel job-description-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Job description</h2>
+                <p>Application deadline: {{ job.deadline or 'Not set' }}</p>
+            </div>
+        </div>
+        <div class="job-detail-content">
+            <p class="job-description-text">{{ job.description }}</p>
+            <h2>Requirements</h2>
+            {% if requirements %}
+                {% for requirement in requirements %}
+                <div class="requirement-group">
+                    <h3>{{ requirement.label }}</h3>
+                    <ul>
+                    {% for line in requirement.text.splitlines() %}
+                        {% if line.strip() %}<li>{{ line }}</li>{% endif %}
+                    {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="form-help">Requirements have not been added yet.</p>
+            {% endif %}
+        </div>
+    </article>
+
+    <aside class="content-panel apply-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Your application</h2>
+                <p>Upload your resume to apply and receive a skill-gap analysis.</p>
+            </div>
+        </div>
+        <div class="apply-panel-content">
+        {% if application %}
+            <span class="status-pill">{{ application.status.replace('_', ' ')|title }}</span>
+            <p>An application record already exists for this job. You can update your resume below unless an assessment has already been assigned.</p>
+            {% if application.resume_original_name %}
+            <p class="uploaded-resume">{{ application.resume_original_name }}</p>
+            <a class="secondary-button" href="{{ url_for('download_resume', application_id=application.id) }}">Download your resume</a>
+            {% endif %}
+            {% if not assignment %}
+            <form method="POST" enctype="multipart/form-data" action="{{ url_for('apply_to_job', job_id=job.id) }}">
+                <label for="resume">Replace resume and rerun analysis</label>
+                <input id="resume" name="resume" type="file" accept=".pdf,.docx" required>
+                <button class="primary-button form-submit" type="submit">Update resume <span>→</span></button>
+            </form>
+            {% else %}
+            <p class="form-help">An assessment has already been assigned. Complete it from your candidate dashboard.</p>
+            {% endif %}
+        {% else %}
+            <form method="POST" enctype="multipart/form-data" action="{{ url_for('apply_to_job', job_id=job.id) }}">
+                <label for="resume">Resume <span class="required-mark">*</span></label>
+                <input id="resume" name="resume" type="file" accept=".pdf,.docx" required>
+                <p class="form-help">Accepted formats: PDF and DOCX. Maximum file size: 5 MB. Scanned PDFs may need OCR.</p>
+                <button class="primary-button form-submit" type="submit">Submit application <span>→</span></button>
+            </form>
+        {% endif %}
+        {% if application %}
+            <div class="notice-card">
+                <strong>Resume analysis</strong>
+                {% if analysis and analysis.analysis_status == 'COMPLETED' and analysis.result %}
+                    <p>Your resume has been analyzed against this job's requirements below.</p>
+                {% elif analysis and analysis.analysis_status == 'FAILED' %}
+                    <p>Your application is saved, but automatic analysis could not be completed. The administrator can review it.</p>
+                {% else %}
+                    <p>Analysis status: {{ analysis.analysis_status if analysis else 'Not started' }}.</p>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="notice-card">
+                <strong>What happens next?</strong>
+                <p>After you submit your resume, the system extracts its text and compares it with the selected job's requirements using Groq.</p>
+            </div>
+        {% endif %}
+        </div>
+    </aside>
+    {% if application and analysis and analysis.analysis_status == 'COMPLETED' and analysis.result %}
+    <section class="content-panel analysis-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>AI resume analysis</h2>
+                <p>This report is decision support and should be reviewed by a human.</p>
+            </div>
+            <span class="status-pill">{{ analysis.result.match_percentage }}% match</span>
+        </div>
+        <div class="job-detail-content">
+            <p><strong>Eligibility:</strong> {{ analysis.result.eligibility.replace('_', ' ')|title }}</p>
+            <p><strong>Qualification:</strong> {{ analysis.result.qualification_match }}</p>
+            <p><strong>Experience:</strong> {{ analysis.result.experience_match }}</p>
+            <p><strong>Summary:</strong> {{ analysis.result.recommendation_summary }}</p>
+            <div class="requirement-group">
+                <h3>Matched skills</h3>
+                {% if analysis.result.matched_skills %}<ul>{% for item in analysis.result.matched_skills %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p>No matched skills were identified.</p>{% endif %}
+            </div>
+            <div class="requirement-group">
+                <h3>Missing or uncertain skills</h3>
+                {% if analysis.result.missing_skills %}<ul>{% for item in analysis.result.missing_skills %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p>No missing skills were identified by the model.</p>{% endif %}
+            </div>
+            <div class="requirement-group">
+                <h3>Resume evidence</h3>
+                {% if analysis.result.evidence %}<ul>{% for item in analysis.result.evidence %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p>No specific evidence was returned.</p>{% endif %}
+            </div>
+        </div>
+    </section>
+    {% elif application and analysis and analysis.analysis_status == 'FAILED' %}
+    <section class="content-panel analysis-panel">
+        <div class="job-detail-content">
+            <h2>Resume analysis unavailable</h2>
+            <p>Your application remains saved. The administrator can retry the analysis.</p>
+        </div>
+    </section>
+    {% endif %}
+</section>
+{% endblock %}

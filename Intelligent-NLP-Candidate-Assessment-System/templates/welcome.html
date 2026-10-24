@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="welcome-card">
+    <div class="welcome-symbol">
+        {% if session.get('role') == 'admin' %}A{% else %}C{% endif %}
+    </div>
+    <div class="eyebrow">{{ role_label }}</div>
+    <h1>{{ page_title }}</h1>
+    <p>You are logged in successfully as <strong>{{ session.get('name') }}</strong>.</p>
+    {% if session.get('role') == 'admin' %}
+        <p class="welcome-subtitle">Your admin dashboard will let you manage job descriptions and review candidate assessments.</p>
+    {% else %}
+        <p class="welcome-subtitle">Your candidate portal will let you explore jobs, submit your resume, and complete assessments.</p>
+    {% endif %}
+    <div class="coming-soon">Dashboard features will be added in the next development phase.</div>
+    <a class="secondary-button" href="{{ url_for('logout') }}">Log out</a>
+</section>
+{% endblock %}

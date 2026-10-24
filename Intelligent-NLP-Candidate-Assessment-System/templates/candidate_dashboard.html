@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="dashboard-heading">
+    <div>
+        <div class="eyebrow">CANDIDATE PORTAL</div>
+        <h1>Welcome, {{ session.get('name') }}</h1>
+        <p>Explore job opportunities, submit your resume, and track your applications.</p>
+    </div>
+    <a class="primary-button dashboard-create-button" href="{{ url_for('candidate_jobs') }}">Browse Jobs <span>→</span></a>
+</section>
+
+<section class="stats-grid candidate-stats">
+    <article class="stat-card">
+        <div class="stat-icon purple-icon">JB</div>
+        <div class="stat-label">Available jobs</div>
+        <div class="stat-value">{{ stats.available_jobs }}</div>
+        <div class="stat-note">Published job openings</div>
+    </article>
+    <article class="stat-card">
+        <div class="stat-icon blue-icon">MY</div>
+        <div class="stat-label">My applications</div>
+        <div class="stat-value">{{ stats.my_applications }}</div>
+        <div class="stat-note">Applications submitted by you</div>
+    </article>
+    <article class="stat-card">
+        <div class="stat-icon green-icon">RV</div>
+        <div class="stat-label">Under review</div>
+        <div class="stat-value">{{ stats.under_review }}</div>
+        <div class="stat-note">Submitted or being reviewed</div>
+    </article>
+    <article class="stat-card">
+        <div class="stat-icon amber-icon">AS</div>
+        <div class="stat-label">Pending assessments</div>
+        <div class="stat-value">{{ stats.pending_assessments }}</div>
+        <div class="stat-note">Assessments assigned in a later phase</div>
+    </article>
+</section>
+
+<section class="content-panel jobs-panel">
+    <div class="panel-heading">
+        <div>
+            <h2>Available jobs</h2>
+            <p>Review published jobs and apply with your resume.</p>
+        </div>
+        <a class="small-action-link" href="{{ url_for('candidate_jobs') }}">View all jobs →</a>
+    </div>
+    {% if available_jobs %}
+    <div class="job-card-grid">
+        {% for job in available_jobs %}
+        <article class="job-card">
+            <div class="job-card-top">
+                <span class="job-tag">Open position</span>
+                {% if job.has_applied %}<span class="status-pill">Applied</span>{% endif %}
+            </div>
+            <h3>{{ job.title }}</h3>
+            <p>{{ job.description|truncate(180) }}</p>
+            <div class="job-card-meta">Deadline: {{ job.deadline or 'Not set' }}</div>
+            <a class="primary-button job-card-button" href="{{ url_for('candidate_job_detail', job_id=job.id) }}">
+                {{ 'View application' if job.has_applied else 'View job and apply' }} <span>→</span>
+            </a>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">JB</div>
+        <h3>No published jobs yet</h3>
+        <p>New job openings will appear here when the admin publishes them.</p>
+    </div>
+    {% endif %}
+</section>
+
+<section class="content-panel">
+    <div class="panel-heading">
+        <div>
+            <h2>My assessments</h2>
+            <p>Assessments assigned after resume screening and administrator review.</p>
+        </div>
+        <span class="panel-count">{{ my_assessments|length }} total</span>
+    </div>
+    {% if my_assessments %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th>Job</th><th>Status</th><th>Assigned</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for assessment in my_assessments %}
+                <tr>
+                    <td class="table-primary">{{ assessment.job_title }}</td>
+                    <td><span class="status-pill">{{ assessment.assessment_status.replace('_', ' ')|title }}</span></td>
+                    <td>{{ assessment.assigned_at }}</td>
+                    <td>
+                        {% if assessment.assessment_status == 'SUBMITTED' %}
+                            Submitted
+                        {% else %}
+                            <a class="table-action" href="{{ url_for('candidate_assessment', assignment_id=assessment.assignment_id) }}">Open assessment</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="form-help">No assessments have been assigned to you yet.</p>
+    {% endif %}
+</section>
+
+<section class="content-panel">
+    <div class="panel-heading">
+        <div>
+            <h2>My recent applications</h2>
+            <p>Only your own application records are displayed here.</p>
+        </div>
+        <span class="panel-count">{{ my_applications|length }} shown</span>
+    </div>
+    {% if my_applications %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th>Job</th><th>Status</th><th>Applied</th><th>Resume</th></tr></thead>
+            <tbody>
+            {% for application in my_applications %}
+                <tr>
+                    <td class="table-primary">{{ application.job_title }}</td>
+                    <td><span class="status-pill">{{ application.status.replace('_', ' ')|title }}</span></td>
+                    <td>{{ application.applied_at }}</td>
+                    <td>
+                        <a class="table-action" href="{{ url_for('candidate_job_detail', job_id=application.job_id) }}">View analysis</a>
+                        {% if application.resume_original_name %}
+                        <a class="table-action" href="{{ url_for('download_resume', application_id=application.id) }}">Download</a>
+                        {% else %}Not uploaded{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">AP</div>
+        <h3>You haven't applied to a job yet</h3>
+        <p>Choose a published job above and upload your resume to apply.</p>
+    </div>
+    {% endif %}
+</section>
+
+<section class="next-step-panel">
+    <div class="next-step-icon">→</div>
+    <div>
+        <h2>What happens next?</h2>
+        <p>Your resume is compared with the job requirements. If the analysis supports eligibility and the admin approves it, an assessment will appear above.</p>
+    </div>
+</section>
+{% endblock %}

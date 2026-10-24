@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="dashboard-heading">
+    <div>
+        <div class="eyebrow">CAREER OPPORTUNITIES</div>
+        <h1>Available Jobs</h1>
+        <p>Browse published positions and review the requirements before applying.</p>
+    </div>
+    <a class="secondary-button" href="{{ url_for('candidate_dashboard') }}">← Back to dashboard</a>
+</section>
+
+<section class="content-panel">
+    {% if jobs %}
+    <div class="job-card-grid job-card-grid-all">
+        {% for job in jobs %}
+        <article class="job-card">
+            <div class="job-card-top">
+                <span class="job-tag">Open position</span>
+                {% if job.has_applied %}<span class="status-pill">Applied</span>{% endif %}
+            </div>
+            <h3>{{ job.title }}</h3>
+            <p>{{ job.description|truncate(220) }}</p>
+            <div class="job-card-meta">Application deadline: {{ job.deadline or 'Not set' }}</div>
+            <a class="primary-button job-card-button" href="{{ url_for('candidate_job_detail', job_id=job.id) }}">
+                {{ 'View application' if job.has_applied else 'View job and apply' }} <span>→</span>
+            </a>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">JB</div>
+        <h3>No published jobs available</h3>
+        <p>Please check again later when the admin publishes a new position.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

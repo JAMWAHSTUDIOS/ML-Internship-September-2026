@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="dashboard-heading">
+    <div>
+        <div class="eyebrow">ADMINISTRATOR WORKSPACE</div>
+        <h1>Welcome back, {{ session.get('name') }}</h1>
+        <p>Manage job openings, define requirements, and monitor candidate applications.</p>
+    </div>
+    <a class="primary-button dashboard-create-button" href="{{ url_for('create_job') }}">＋ Create Job</a>
+</section>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <div class="stat-icon purple-icon">JB</div>
+        <div class="stat-label">Published jobs</div>
+        <div class="stat-value">{{ stats.active_jobs }}</div>
+        <div class="stat-note">Currently visible to candidates</div>
+    </article>
+    <article class="stat-card">
+        <div class="stat-icon blue-icon">CA</div>
+        <div class="stat-label">Candidate accounts</div>
+        <div class="stat-value">{{ stats.candidate_count }}</div>
+        <div class="stat-note">Registered candidates</div>
+    </article>
+    <article class="stat-card">
+        <div class="stat-icon green-icon">AP</div>
+        <div class="stat-label">Applications received</div>
+        <div class="stat-value">{{ stats.application_count }}</div>
+        <div class="stat-note">Across all jobs</div>
+    </article>
+    <article class="stat-card">
+        <div class="stat-icon amber-icon">RV</div>
+        <div class="stat-label">Awaiting review</div>
+        <div class="stat-value">{{ stats.pending_reviews }}</div>
+        <div class="stat-note">Submitted or under review</div>
+    </article>
+</section>
+
+<section class="content-panel jobs-panel">
+    <div class="panel-heading">
+        <div>
+            <h2>Job management</h2>
+            <p>Create jobs, define requirements, and prepare assessment questions.</p>
+        </div>
+        <a class="small-action-link" href="{{ url_for('create_job') }}">+ New job</a>
+    </div>
+    {% if jobs %}
+    <div class="table-wrap">
+        <table class="data-table jobs-table">
+            <thead>
+                <tr>
+                    <th>Job title</th>
+                    <th>Status</th>
+                    <th>Requirements</th>
+                    <th>Questions</th>
+                    <th>Deadline</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td class="table-primary job-title-cell">{{ job.title }}<small>Updated {{ job.updated_at }}</small>
+                    </td>
+                    <td><span class="status-pill status-{{ job.status }}">{{ job.status|title }}</span></td>
+                    <td>Mandatory</td>
+                    <td>{{ job.assessment_question_count }}</td>
+                    <td>{{ job.deadline or 'Not set' }}</td>
+                    <td>
+                        <div class="job-actions">
+                            <a class="table-action" href="{{ url_for('edit_job', job_id=job.id) }}">Edit</a>
+                            {% if job.status == 'draft' %}
+                            <form class="inline-action-form" method="POST"
+                                action="{{ url_for('change_job_status', job_id=job.id) }}"><input type="hidden"
+                                    name="status" value="published"><button class="table-action"
+                                    type="submit">Publish</button></form>
+                            {% elif job.status == 'published' %}
+                            <form class="inline-action-form" method="POST"
+                                action="{{ url_for('change_job_status', job_id=job.id) }}"><input type="hidden"
+                                    name="status" value="closed"><button class="table-action table-action-muted"
+                                    type="submit">Close</button></form>
+                            {% else %}
+                            <form class="inline-action-form" method="POST"
+                                action="{{ url_for('change_job_status', job_id=job.id) }}"><input type="hidden"
+                                    name="status" value="published"><button class="table-action"
+                                    type="submit">Reopen</button></form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">JB</div>
+        <h3>No jobs created yet</h3>
+        <p>Create your first job, define its requirements, and add assessment questions.</p>
+        <a class="primary-button empty-state-button" href="{{ url_for('create_job') }}">Create your first job
+            <span>→</span></a>
+    </div>
+    {% endif %}
+</section>
+
+<section class="content-panel">
+    <div class="panel-heading">
+        <div>
+            <h2>Recent applications</h2>
+            <p>The latest candidate applications will appear here.</p>
+        </div>
+        <span class="panel-count">{{ recent_applications|length }} shown</span>
+    </div>
+    {% if recent_applications %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Candidate</th>
+                    <th>Job</th>
+                    <th>Status</th>
+                    <th>Applied</th>
+                    <th>Resume</th>
+                    <th>LLM analysis</th>
+                    <th>Review</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for application in recent_applications %}
+                <tr>
+                    <td class="table-primary">{{ application.candidate_name }}</td>
+                    <td>{{ application.job_title }}</td>
+                    <td><span class="status-pill">{{ application.status.replace('_', ' ')|title }}</span></td>
+                    <td>{{ application.applied_at }}</td>
+                    <td>
+                        {% if application.resume_filename %}
+                        <a class="table-action" href="{{ url_for('download_resume', application_id=application.id) }}">Download</a>
+                        {% else %}
+                        Not uploaded
+                        {% endif %}
+                    </td>
+                    <td>{{ (application.analysis_status or 'NOT STARTED').replace('_', ' ')|title }}</td>
+                    <td><a class="table-action" href="{{ url_for('admin_application_detail', application_id=application.id) }}">Review</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">AP</div>
+        <h3>No applications yet</h3>
+        <p>Once candidates apply to published jobs, their applications will appear here.</p>
+    </div>
+    {% endif %}
+</section>
+
+{% endblock %}

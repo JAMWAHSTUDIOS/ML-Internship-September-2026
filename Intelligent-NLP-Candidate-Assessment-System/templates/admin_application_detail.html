@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="dashboard-heading">
+    <div>
+        <div class="eyebrow">ADMINISTRATOR WORKSPACE</div>
+        <h1>Application review</h1>
+        <p>Review the resume analysis and verify the evidence before making any decision.</p>
+    </div>
+    <a class="secondary-button" href="{{ url_for('admin_dashboard') }}">← Admin dashboard</a>
+</section>
+
+<section class="content-panel">
+    <div class="panel-heading"><div><h2>{{ application.candidate_name }}</h2><p>{{ application.candidate_email }}</p></div><span class="status-pill">{{ application.status.replace('_', ' ')|title }}</span></div>
+    <div class="job-detail-content">
+        <p><strong>Job:</strong> {{ application.job_title }}</p>
+        <p><strong>Applied:</strong> {{ application.applied_at }}</p>
+        <p><strong>Resume:</strong> {% if application.resume_filename %}<a class="table-action" href="{{ url_for('download_resume', application_id=application.id) }}">Download resume</a>{% else %}Not uploaded{% endif %}</p>
+        <h3>Job requirements</h3>
+        {% for requirement in requirements %}
+        <div class="requirement-group"><h3>{{ requirement.label }}</h3><ul>{% for line in requirement.text.splitlines() %}{% if line.strip() %}<li>{{ line }}</li>{% endif %}{% endfor %}</ul></div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="content-panel analysis-panel">
+    <div class="panel-heading"><div><h2>Groq resume analysis</h2><p>Model output is advisory and must be checked against the original resume.</p></div>
+    {% if analysis %}<span class="status-pill">{{ analysis.analysis_status.replace('_', ' ')|title }}</span>{% endif %}</div>
+    <div class="job-detail-content">
+        {% if analysis and analysis.analysis_status == 'COMPLETED' and analysis.result %}
+            <h3>Match score: {{ analysis.result.match_percentage }}%</h3>
+            <p><strong>Eligibility:</strong> {{ analysis.result.eligibility.replace('_', ' ')|title }}</p>
+            <p><strong>Qualification:</strong> {{ analysis.result.qualification_match }}</p>
+            <p><strong>Experience:</strong> {{ analysis.result.experience_match }}</p>
+            <p><strong>Summary:</strong> {{ analysis.result.recommendation_summary }}</p>
+            <div class="requirement-group"><h3>Matched skills</h3>{% if analysis.result.matched_skills %}<ul>{% for item in analysis.result.matched_skills %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p>None identified.</p>{% endif %}</div>
+            <div class="requirement-group"><h3>Missing or uncertain skills</h3>{% if analysis.result.missing_skills %}<ul>{% for item in analysis.result.missing_skills %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p>None identified by the model.</p>{% endif %}</div>
+            <div class="requirement-group"><h3>Evidence from resume</h3>{% if analysis.result.evidence %}<ul>{% for item in analysis.result.evidence %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p>No evidence returned.</p>{% endif %}</div>
+        {% elif analysis and analysis.analysis_status == 'FAILED' %}
+            <p><strong>Analysis failed.</strong> {{ analysis.error_message }}</p>
+            <p>The application and uploaded resume are still saved.</p>
+        {% else %}
+            <p>No analysis has been completed yet.</p>
+        {% endif %}
+        <form method="POST" action="{{ url_for('reanalyze_application', application_id=application.id) }}">
+            <button class="primary-button form-submit" type="submit">Run analysis again <span>→</span></button>
+        </form>
+        {% if analysis and analysis.analysis_status == 'COMPLETED' and analysis.result and analysis.result.eligibility == 'POTENTIALLY_ELIGIBLE' and not assignment %}
+        <form method="POST" action="{{ url_for('assign_assessment', application_id=application.id) }}">
+            <button class="primary-button form-submit" type="submit">Assign assessment to candidate <span>→</span></button>
+        </form>
+        {% elif assignment %}
+        <p><strong>Assessment status:</strong> {{ assignment.status.replace('_', ' ')|title }}</p>
+        {% endif %}
+    </div>
+</section>
+
+{% if assignment %}
+<section class="content-panel analysis-panel">
+    <div class="panel-heading"><div><h2>Assessment results</h2><p>Cosine similarity is a text-vector similarity measure, not a standalone correctness decision.</p></div><span class="status-pill">{{ assignment.status.replace('_', ' ')|title }}</span></div>
+    <div class="job-detail-content">
+        {% if assessment_average_cosine is not none %}
+        <h3>Average cosine similarity: {{ assessment_average_cosine }}%</h3>
+        {% endif %}
+        {% if assessment_responses %}
+            {% for answer in assessment_responses %}
+            <div class="requirement-group">
+                <h3>Question {{ loop.index }}: {{ answer.question_text }}</h3>
+                <p><strong>Candidate answer:</strong> {{ answer.answer_text }}</p>
+                <p><strong>Cosine similarity:</strong> {{ answer.cosine_score if answer.cosine_score is not none else 'Not calculated' }}%</p>
+                <p><strong>Groq correctness score:</strong> {{ answer.correctness_score if answer.correctness_score is not none else 'Not evaluated' }}%</p>
+                <p><strong>Reference answer:</strong> {{ answer.reference_answer or 'Not available' }}</p>
+                <p><strong>AI feedback:</strong> {{ answer.feedback or 'No feedback available.' }}</p>
+            </div>
+            {% endfor %}
+        {% elif assignment.status == 'ASSIGNED' or assignment.status == 'IN_PROGRESS' %}
+            <p>The candidate has not submitted this assessment yet.</p>
+        {% else %}
+            <p>No answer results are available yet.</p>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

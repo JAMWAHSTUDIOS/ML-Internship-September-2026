@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="dashboard-heading">
+    <div>
+        <div class="eyebrow">JOB MANAGEMENT</div>
+        <h1>{{ 'Edit job' if job else 'Create a job' }}</h1>
+        <p>Define the role and the criteria candidates will be assessed against.</p>
+    </div>
+    <a class="secondary-button" href="{{ url_for('admin_dashboard') }}">← Back to dashboard</a>
+</section>
+
+<section class="form-card job-form-card">
+    <form method="POST">
+        <div class="form-section-title">Job details</div>
+
+        <label for="title">Job title <span class="required-mark">*</span></label>
+        <input id="title" name="title" type="text" maxlength="150" required placeholder="e.g. Junior Python Developer"
+            value="{{ request.form.get('title', job.title if job else '') }}">
+
+        <label for="description">Job description <span class="required-mark">*</span></label>
+        <textarea id="description" name="description" rows="6" required
+            placeholder="Describe the role, responsibilities, and what the candidate will do.">{{ request.form.get('description', job.description if job else '') }}</textarea>
+
+        <label for="deadline">Application deadline (optional)</label>
+        <input id="deadline" name="deadline" type="date"
+            value="{{ request.form.get('deadline', job.deadline if job and job.deadline else '') }}">
+
+        <div class="form-section-title requirements-title">Candidate Requirements</div>
+        <p class="form-help">Complete all three fields. Enter one requirement per line where appropriate.</p>
+
+        <label for="qualification">Qualification <span class="required-mark">*</span></label>
+        <textarea id="qualification" name="qualification" rows="3" required
+            placeholder="e.g. Bachelor's degree in Computer Science or a related field">{{ qualification_text }}</textarea>
+
+        <label for="skills">Skills <span class="required-mark">*</span></label>
+        <textarea id="skills" name="skills" rows="4" required
+            placeholder="e.g. Python&#10;SQL&#10;Flask&#10;Problem-solving">{{ skills_text }}</textarea>
+
+        <label for="experience">Experience <span class="required-mark">*</span></label>
+        <textarea id="experience" name="experience" rows="3" required
+            placeholder="e.g. 1 year of Python development experience, or relevant project experience">{{ experience_text }}</textarea>
+
+        <div class="form-section-title requirements-title">Assessment Questions</div>
+        <p class="form-help">Enter one question per line. Candidates will only receive an assessment in a later phase after the resume review workflow is implemented. Add at least one question before publishing.</p>
+        <label for="assessment_questions">Questions (required before publishing)</label>
+        <textarea id="assessment_questions" name="assessment_questions" rows="6"
+            placeholder="e.g. What is the difference between a list and a tuple in Python?&#10;Explain how a Python dictionary works.">{{ assessment_questions_text }}</textarea>
+
+        <div class="form-section-title requirements-title">Publication</div>
+
+        <label for="status">Job status</label>
+        <select id="status" name="status">
+            <option value="draft" {% if request.form.get('status', job.status if job else 'draft' )=='draft'
+                %}selected{% endif %}>Save as draft</option>
+            <option value="published" {% if request.form.get('status', job.status if job else 'draft' )=='published'
+                %}selected{% endif %}>Publish for candidates</option>
+            {% if job and job.status == 'closed' %}
+            <option value="closed" selected>Closed</option>
+            {% endif %}
+        </select>
+
+        <div class="form-actions">
+            <a class="secondary-button" href="{{ url_for('admin_dashboard') }}">Cancel</a>
+            <button class="primary-button form-submit" type="submit">
+                {{ 'Save changes' if job else 'Save job' }} <span>→</span>
+            </button>
+        </div>
+    </form>
+</section>
+{% endblock %}
